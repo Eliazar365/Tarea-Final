@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 class JuegoDeCocina
@@ -6,58 +7,61 @@ class JuegoDeCocina
     static async Task Main()
     {
         Console.WriteLine("¡Bienvenido al juego de cocina!");
+        Console.WriteLine("Por favor, escribe el nombre del plato que deseas preparar:");
+        string plato = Console.ReadLine();
 
-        // Tarea: Preparación del plato completo
-        Task platoCompleto = Task.Factory.StartNew(() =>
+        Console.WriteLine($"¡Genial! Vamos a preparar {plato}.");
+        Console.WriteLine("Escribe los componentes de la receta separados por comas (ejemplo: cortar verduras, cocinar pasta, preparar salsa):");
+        string[] componentes = Console.ReadLine()?.Split(',');
+
+        if (componentes == null || componentes.Length == 0)
         {
-            Console.WriteLine("Comenzando la preparación del plato.");
+            Console.WriteLine("No se ingresaron componentes. Finalizando el programa.");
+            return;
+        }
 
-            Task.Factory.StartNew(() =>
+        // Tareas para preparar cada componente
+        List<Task> tareasDePreparacion = new List<Task>();
+        foreach (var componente in componentes)
+        {
+            string tarea = componente.Trim();
+            tareasDePreparacion.Add(Task.Factory.StartNew(() =>
             {
-                Console.WriteLine("Tarea: Cortando verduras.");
-                Task.Delay(1500).Wait();
-                Console.WriteLine("Verduras listas.");
-            }, TaskCreationOptions.AttachedToParent);
+                Console.WriteLine($"Tarea: {tarea}.");
+                SimularTarea($"{tarea} lista.", new Random().Next(1000, 3000)); // Simular tiempo aleatorio
+            }));
+        }
 
-            Task.Factory.StartNew(() =>
-            {
-                Console.WriteLine("Tarea: Cocinando la pasta.");
-                Task.Delay(2000).Wait();
-                Console.WriteLine("Pasta cocida.");
-            }, TaskCreationOptions.AttachedToParent);
-
-            Task.Factory.StartNew(() =>
-            {
-                Console.WriteLine("Tarea: Preparando la salsa.");
-                Task.Delay(2500).Wait();
-                Console.WriteLine("Salsa lista.");
-            }, TaskCreationOptions.AttachedToParent);
-        });
-
-        // Usando Task.Run para una tarea adicional
+        // Tarea adicional: limpiar la cocina
         Task limpiarCocina = Task.Run(() =>
         {
             Console.WriteLine("Tarea: Limpiando la cocina.");
-            Task.Delay(1000).Wait();
-            Console.WriteLine("Cocina limpia.");
+            SimularTarea("Cocina limpia.", 1000);
         });
 
+        // Tarea adicional: decorar el plato
         Task decoracionPlato = new Task(() =>
         {
             Console.WriteLine("Tarea: Decorando el plato.");
-            Task.Delay(1200).Wait();
-            Console.WriteLine("Decoración lista.");
+            SimularTarea("Decoración lista.", 1200);
         });
         decoracionPlato.Start();
 
-        await platoCompleto.ContinueWith(t =>
-        {
-            Console.WriteLine("¡Receta lista!");
-        }, TaskContinuationOptions.OnlyOnRanToCompletion);
+        // Ejecutar las tareas
+        Console.WriteLine("Iniciando la preparación...");
+        await Task.WhenAll(tareasDePreparacion);
 
-        // Esperar todas las tareas
-        await Task.WhenAll(platoCompleto, limpiarCocina, decoracionPlato);
+        // Continuar cuando todas las tareas principales terminen
+        await Task.WhenAll(limpiarCocina, decoracionPlato);
 
+        Console.WriteLine($"¡{plato} está listo para servir!");
         Console.WriteLine("¡Gracias por jugar!");
+    }
+
+    // Método para simular una tarea con un tiempo de espera
+    static void SimularTarea(string mensajeFinal, int delay)
+    {
+        Task.Delay(delay).Wait();
+        Console.WriteLine(mensajeFinal);
     }
 }
